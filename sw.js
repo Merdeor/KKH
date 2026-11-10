@@ -1,5 +1,5 @@
 // 앱 파일을 한 번 저장해 두고 오프라인에서도 실행되게 합니다. 파일을 고치면 CACHE 버전을 올리세요.
-var CACHE = 'tablet-check-v1';
+var CACHE = 'tablet-check-v2';
 var FILES = ['./', './index.html', './diag.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
