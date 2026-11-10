@@ -33,6 +33,7 @@
   .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)} .na{color:var(--na)} .pending{color:var(--pending)} .info{color:var(--muted)}
   .item .title { font-weight:600; }
   .item .msg { grid-column:2; color:var(--muted); font-size:.92rem; word-break:break-word; }
+  .item .advice { grid-column:1 / -1; margin-top:4px; padding:8px 10px; border-radius:8px; background:var(--bg); font-size:.92rem; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
   button { font:inherit; min-height:48px; padding:8px 16px; border-radius:12px; border:1px solid var(--line);
            background:var(--card); color:var(--text); cursor:pointer; }
@@ -87,7 +88,7 @@
     ['camera', '카메라'], ['mic', '마이크'], ['sensor', '움직임 센서'], ['vibrate', '진동']
   ];
   var results = {};
-  AUTO.concat(MANUAL).forEach(function (t) { results[t[0]] = { title: t[1], status: D.PENDING, msg: '아직 검사하지 않았습니다' }; });
+  AUTO.concat(MANUAL).forEach(function (t) { results[t[0]] = { id: t[0], title: t[1], status: D.PENDING, msg: '아직 검사하지 않았습니다' }; });
 
   function set(id, res) { results[id].status = res.status; results[id].msg = res.msg; render(); }
 
@@ -96,7 +97,10 @@
     var b = document.createElement('span'); b.className = 'badge ' + r.status; b.textContent = LABEL[r.status];
     var t = document.createElement('span'); t.className = 'title'; t.textContent = r.title;
     var m = document.createElement('span'); m.className = 'msg'; m.textContent = r.msg;
-    el.append(b, t, m); return el;
+    el.append(b, t, m);
+    var adv = D.adviceFor(r.id, r.status);
+    if (adv) { var a = document.createElement('span'); a.className = 'advice'; a.textContent = '해결 방법: ' + adv; el.appendChild(a); }
+    return el;
   }
   function render() {
     $('auto').replaceChildren.apply($('auto'), AUTO.map(function (t) { return itemEl(results[t[0]]); }));

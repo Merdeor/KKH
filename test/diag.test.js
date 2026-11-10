@@ -73,6 +73,17 @@ test('summarize', () => {
   assert.equal(D.summarize(['ok', 'ok']).score, 100);
 });
 
+test('adviceFor', () => {
+  const ids = ['battery', 'storage', 'memory', 'network', 'cpu', 'fps', 'touch', 'display', 'sound', 'camera', 'mic', 'sensor', 'vibrate'];
+  for (const id of ids) {
+    assert.ok(D.adviceFor(id, 'bad'), id + ' bad');
+    assert.ok(D.adviceFor(id, 'warn'), id + ' warn');
+    for (const s of ['ok', 'na', 'pending']) assert.equal(D.adviceFor(id, s), null);
+  }
+  assert.equal(D.adviceFor('unknown', 'bad'), null);
+  assert.equal(D.adviceFor('toString', 'bad'), null);
+});
+
 test('fmtBytes', () => {
   assert.equal(D.fmtBytes(512), '512B');
   assert.equal(D.fmtBytes(1536), '1.5KB');

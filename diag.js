@@ -91,6 +91,30 @@
     return { counts: c, score: score, verdict: verdict };
   }
 
+  var REBOOT = '재부팅한 뒤 다시 검사해 보세요.';
+  var SERVICE = ' 그래도 같으면 서비스센터(A/S)에 문의하세요.';
+  var ADVICE = {
+    battery: '충전기를 연결하세요. 충전 중에도 계속 줄면 충전기·케이블을 바꿔 보세요.',
+    storage: '설정 > 배터리 및 디바이스 케어 > 저장공간에서 안 쓰는 앱, 사진, 다운로드 파일을 지우세요.',
+    memory: '최근 앱 목록에서 앱을 모두 닫고 ' + REBOOT + ' 안 쓰는 앱은 삭제하세요.',
+    network: 'Wi-Fi를 껐다 켜고 공유기 가까이에서 다시 검사해 보세요.',
+    cpu: '최근 앱을 모두 닫고 ' + REBOOT + ' 계속 느리면 안 쓰는 앱을 삭제하세요.',
+    fps: REBOOT + ' 그래도 낮으면 설정 > 디스플레이에서 화면 주사율을 확인하세요.',
+    touch: '화면과 손가락을 닦고 보호필름을 떼 본 뒤 다시 검사하세요. 같은 구역이 계속 안 되면 서비스센터(A/S) 점검이 필요합니다.',
+    display: '얼룩이나 죽은 화소는 설정으로 고칠 수 없습니다. 서비스센터(A/S)에 문의하세요.',
+    sound: '음량·무음 설정을 확인하고 케이스를 벗겨 보세요.' + SERVICE,
+    camera: '크롬 > 사이트 설정에서 카메라를 "허용"으로 바꾸세요.' + SERVICE,
+    mic: '크롬 > 사이트 설정에서 마이크를 "허용"으로 바꾸세요.' + SERVICE,
+    sensor: REBOOT + SERVICE,
+    vibrate: '진동·무음 설정을 확인하고 케이스를 벗겨 보세요.' + SERVICE
+  };
+
+  // 주의/문제일 때만 해결 안내를 돌려줍니다. 그 외에는 null.
+  function adviceFor(id, status) {
+    if (status !== WARN && status !== BAD) return null;
+    return ADVICE.hasOwnProperty(id) ? ADVICE[id] : null;
+  }
+
   function fmtBytes(n) {
     var u = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0;
     while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
@@ -102,7 +126,7 @@
     gradeBattery: gradeBattery, gradeStorage: gradeStorage, gradeMemory: gradeMemory,
     gradeNetwork: gradeNetwork, gradeCpu: gradeCpu, gradeFps: gradeFps,
     gradeTouch: gradeTouch, gradeMic: gradeMic, gradeSensor: gradeSensor,
-    yesNo: yesNo, summarize: summarize, fmtBytes: fmtBytes
+    yesNo: yesNo, summarize: summarize, adviceFor: adviceFor, fmtBytes: fmtBytes
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Diag = api;
