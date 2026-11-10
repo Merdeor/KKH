@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>태블릿 점검기</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2457d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
   :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#667085; --line:#e4e7ec;
           --ok:#12805c; --warn:#b54708; --bad:#c0281c; --na:#667085; --pending:#475467; --accent:#2457d6; }
@@ -292,6 +297,8 @@
   ];
   var infoEl = $('info');
   info.forEach(function (x) { infoEl.appendChild(itemEl({ title: x[0], status: 'info', msg: x[1] })); });
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
 
   $('runAuto').onclick = runAuto;
   render();
