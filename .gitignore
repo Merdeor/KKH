@@ -5,3 +5,6 @@
 
 # Anchor session state
 .anchor/
+
+# Claude Code chat exports (per-session transcripts)
+.claude/chat-exports/
