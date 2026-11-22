@@ -5,3 +5,4 @@
 
 # Anchor session state
 .anchor/
+__pycache__/
