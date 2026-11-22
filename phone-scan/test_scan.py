@@ -152,6 +152,44 @@ class CollectTests(unittest.TestCase):
         self.assertIn("발견되지 않았습니다", scan.render_html(res, "d"))
 
 
+class WirelessTests(unittest.TestCase):
+    def test_is_termux(self):
+        self.assertTrue(scan.is_termux({"PREFIX": "/data/data/com.termux/files/usr"}))
+        self.assertFalse(scan.is_termux({"PREFIX": "/usr"}))
+        self.assertFalse(scan.is_termux({}))
+
+    def test_default_out(self):
+        with tempfile.TemporaryDirectory() as d:
+            home = Path(d)
+            termux = {"PREFIX": "/data/data/com.termux/files/usr"}
+            self.assertEqual(scan.default_out(termux, home), home / "폰검사_리포트")
+            (home / "storage" / "downloads").mkdir(parents=True)
+            self.assertEqual(scan.default_out(termux, home), home / "storage" / "downloads" / "폰검사_리포트")
+            self.assertEqual(scan.default_out({}, home), home / "폰검사_리포트")
+
+    def test_pair_success_and_failure(self):
+        scan.adb_pair(lambda *a: "Successfully paired to localhost:4000 [guid=x]\n", "localhost:4000", "123456")
+        with self.assertRaises(scan.AdbError):
+            scan.adb_pair(lambda *a: "Failed: Wrong password or password is not set\n", "localhost:4000", "000000")
+
+    def test_connect_success_and_failure(self):
+        scan.adb_connect(lambda *a: "connected to localhost:5555\n", "localhost:5555")
+        scan.adb_connect(lambda *a: "already connected to localhost:5555\n", "localhost:5555")
+        for bad in ("failed to connect to 'localhost:5555': Connection refused\n",
+                    "cannot connect to localhost:5555: Connection refused\n", ""):
+            with self.assertRaises(scan.AdbError):
+                scan.adb_connect(lambda *a, o=bad: o, "localhost:5555")
+
+    def test_open_report_termux_without_opener_returns_false(self):
+        termux = {"PREFIX": "/data/data/com.termux/files/usr"}
+        orig = scan.shutil.which
+        scan.shutil.which = lambda name: None
+        try:
+            self.assertFalse(scan.open_report("/tmp/x.html", termux))
+        finally:
+            scan.shutil.which = orig
+
+
 class BlocklistTests(unittest.TestCase):
     def test_load(self):
         with tempfile.TemporaryDirectory() as d:

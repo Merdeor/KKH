@@ -16,6 +16,18 @@ python install_desktop.py
 ## 사용
 폰을 USB로 연결 → 폰의 "USB 디버깅 허용" 승인 → `폰검사 실행.bat` 더블클릭. 결과 리포트(HTML)가 `내 폴더\폰검사_리포트\`에 저장되고 브라우저로 열립니다.
 
+## 폰에서 직접 실행 (Termux, PC 불필요)
+Android 11 이상, Wi-Fi 연결 필요. 폰 자신에게 무선 디버깅으로 접속해 같은 `scan.py`를 돌립니다.
+1. **F-Droid**에서 Termux, Termux:API를 설치합니다 (Play 스토어판 Termux는 오래되어 비권장).
+2. Termux에서: `pkg install python android-tools termux-api` 그리고 `termux-setup-storage` (권한 허용)
+3. 이 폴더의 `scan.py`를 폰으로 가져옵니다 (GitHub ZIP을 받아 다운로드 폴더에 푼 뒤 `cp ~/storage/downloads/.../scan.py ~/`).
+4. 설정 → 개발자 옵션 → **무선 디버깅** 켜기 → "페어링 코드로 기기 페어링"을 누릅니다. 화면에 `IP:포트`와 6자리 코드가 뜹니다. 이 창은 닫지 마세요.
+5. Termux를 분할 화면이나 팝업으로 열고: `python scan.py --pair localhost:<페어링 포트> --code <6자리>`
+6. 무선 디버깅 메인 화면의 `IP:포트`(페어링 포트와 다름)로: `python scan.py --connect localhost:<연결 포트>`
+7. 리포트는 `다운로드/폰검사_리포트/`에 저장되고 `termux-open`으로 열립니다. 한 번 페어링하면 이후엔 6번만 하면 됩니다. 재부팅하거나 Wi-Fi가 바뀌면 포트가 달라질 수 있습니다.
+
+기기·제조사에 따라 `localhost` 접속이 막혀 있을 수 있습니다 (그때는 폰의 Wi-Fi IP를 대신 씁니다).
+
 ## 점검 신호 (점수 합산: 3점 이상 주의, 6점 이상 위험)
 | 신호 | 점수 |
 |---|---|

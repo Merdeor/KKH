@@ -11,6 +11,7 @@ import argparse
 import datetime
 import html
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -76,6 +77,48 @@ def make_runner(adb, serial=None):
             raise AdbError((p.stderr or p.stdout).strip() or "adb 오류")
         return p.stdout
     return run
+
+
+def is_termux(env=None):
+    env = os.environ if env is None else env
+    return "com.termux" in env.get("PREFIX", "")
+
+
+def default_out(env=None, home=None):
+    """리포트 기본 저장 폴더. Termux에서는 폰 브라우저/파일앱에서 보이는 다운로드 폴더를 쓴다."""
+    home = Path.home() if home is None else Path(home)
+    downloads = home / "storage" / "downloads"
+    if is_termux(env) and downloads.is_dir():
+        return downloads / "폰검사_리포트"
+    return home / "폰검사_리포트"
+
+
+def adb_ok(output, success_words):
+    low = output.lower()
+    return any(w in low for w in success_words) and "failed" not in low and "cannot" not in low
+
+
+def adb_pair(run, hostport, code):
+    out = run("pair", hostport, code)
+    if not adb_ok(out, ("successfully paired",)):
+        raise AdbError("페어링 실패: " + out.strip())
+
+
+def adb_connect(run, hostport):
+    out = run("connect", hostport)
+    if not adb_ok(out, ("connected to", "already connected")):
+        raise AdbError("연결 실패: " + out.strip())
+
+
+def open_report(path, env=None):
+    """리포트를 연다. Termux는 termux-open(termux-api), 그 외는 기본 브라우저."""
+    if is_termux(env):
+        opener = shutil.which("termux-open")
+        if opener:
+            subprocess.run([opener, str(path)], check=False)
+            return True
+        return False
+    return webbrowser.open(Path(path).as_uri())
 
 
 def parse_devices(text):
@@ -344,7 +387,10 @@ ADB를 찾을 수 없습니다. 아래 순서로 준비하세요.
 def main(argv=None):
     ap = argparse.ArgumentParser(description="폰 악성코드 점검기 (Android, ADB)")
     ap.add_argument("--serial", help="여러 기기가 연결된 경우 대상 기기 시리얼")
-    ap.add_argument("--out", default=str(Path.home() / "폰검사_리포트"), help="리포트 저장 폴더")
+    ap.add_argument("--pair", metavar="HOST:PORT", help="무선 디버깅 페어링 주소 (폰 자신에게는 localhost:포트)")
+    ap.add_argument("--code", help="--pair 와 함께 쓰는 6자리 페어링 코드")
+    ap.add_argument("--connect", metavar="HOST:PORT", help="무선 디버깅 연결 주소 (폰 자신에게는 localhost:포트)")
+    ap.add_argument("--out", default=str(default_out()), help="리포트 저장 폴더")
     ap.add_argument("--blocklist", default=str(HERE / "blocklist.txt"), help="차단할 패키지명 목록 파일")
     ap.add_argument("--no-open", action="store_true", help="리포트를 브라우저로 열지 않음")
     args = ap.parse_args(argv)
@@ -354,7 +400,23 @@ def main(argv=None):
         print(SETUP_HELP)
         return 2
 
-    devices = parse_devices(make_runner(adb)("devices"))
+    plain = make_runner(adb)
+    try:
+        if args.pair:
+            if not args.code:
+                print("--pair 에는 --code(6자리 페어링 코드)가 필요합니다.")
+                return 5
+            adb_pair(plain, args.pair, args.code)
+            print("페어링 완료")
+        if args.connect:
+            adb_connect(plain, args.connect)
+            print("연결 완료: " + args.connect)
+            args.serial = args.serial or args.connect
+    except AdbError as e:
+        print(e)
+        return 6
+
+    devices = parse_devices(plain("devices"))
     ready = [d for d in devices if d[1] == "device"]
     if args.serial:
         ready = [d for d in ready if d[0] == args.serial]
@@ -383,8 +445,8 @@ def main(argv=None):
     (out / ("리포트_%s.json" % stamp)).write_text(
         json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print("\n리포트 저장: %s" % report)
-    if not args.no_open:
-        webbrowser.open(report.as_uri())
+    if not args.no_open and not open_report(report):
+        print("자동으로 열 수 없습니다. 파일 앱에서 위 경로의 HTML을 열어 보세요.")
     return 0
 
 
